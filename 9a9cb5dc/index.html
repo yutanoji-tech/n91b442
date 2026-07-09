@@ -1,0 +1,268 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex, nofollow">
+<meta http-equiv="refresh" content="300">
+<title>U Share タスク｜Yuta</title>
+<style>
+:root{
+  --paper:#f3f4f8; --surface:#ffffff; --surface-2:#f8f9fc; --line:#e4e6ef;
+  --ink:#191c28; --muted:#6b7183; --faint:#9aa0b0;
+  --accent:#3a4d8f;
+  --danger:#c0392b; --danger-bg:#fbe9e7;
+  --warn:#a9720f; --warn-bg:#fdf3d9;
+  --ok:#2c7a58; --ok-bg:#e3f3ea;
+  --shadow:0 1px 2px rgba(20,25,50,.06),0 6px 20px rgba(20,25,50,.05);
+  --radius:14px;
+  --p-high:#d6604d; --p-mid:#d6a53c; --p-low:#b7bcc8;
+}
+@media (prefers-color-scheme:dark){
+  :root{
+    --paper:#0e1016; --surface:#181b23; --surface-2:#1f2330; --line:#282d3b;
+    --ink:#e9ebf2; --muted:#9aa1b3; --faint:#6a7185;
+    --accent:#8ea1e0;
+    --danger:#e5695f; --danger-bg:#3a1f1d; --warn:#e0b24a; --warn-bg:#332a12;
+    --ok:#4bbd88; --ok-bg:#123026;
+    --shadow:0 1px 2px rgba(0,0,0,.3),0 8px 24px rgba(0,0,0,.28);
+    --p-high:#e5776a; --p-mid:#e0b24a; --p-low:#4a5064;
+  }
+}
+:root[data-theme="light"]{--paper:#f3f4f8;--surface:#fff;--ink:#191c28;}
+:root[data-theme="dark"]{--paper:#0e1016;--surface:#181b23;--ink:#e9ebf2;}
+*{box-sizing:border-box}
+html,body{margin:0}
+body{
+  font-family:-apple-system,BlinkMacSystemFont,"Hiragino Sans","Noto Sans JP",sans-serif;
+  background:var(--paper); color:var(--ink);
+  -webkit-font-smoothing:antialiased; line-height:1.5;
+  padding-bottom:4rem;
+}
+.wrap{max-width:840px; margin:0 auto; padding:0 16px}
+header.top{
+  position:sticky; top:0; z-index:10; background:color-mix(in srgb,var(--paper) 88%,transparent);
+  backdrop-filter:saturate(1.4) blur(10px); border-bottom:1px solid var(--line);
+}
+.top .wrap{display:flex; align-items:center; gap:12px; padding:11px 16px}
+.brand{font-weight:700; font-size:15px; letter-spacing:.01em; white-space:nowrap}
+.brand small{display:block; font-weight:500; color:var(--faint); font-size:11px; letter-spacing:.04em}
+.search{margin-left:auto; flex:1; max-width:260px}
+.search input{
+  width:100%; padding:8px 12px; border:1px solid var(--line); border-radius:10px;
+  background:var(--surface); color:var(--ink); font-size:14px; font-family:inherit;
+}
+.search input:focus{outline:2px solid color-mix(in srgb,var(--accent) 50%,transparent); outline-offset:0; border-color:var(--accent)}
+
+.eyebrow{font-size:11px; font-weight:700; letter-spacing:.11em; text-transform:uppercase; color:var(--faint); margin:26px 2px 10px}
+
+/* score hero */
+.hero{
+  margin-top:18px; background:var(--surface); border:1px solid var(--line);
+  border-radius:var(--radius); box-shadow:var(--shadow); overflow:hidden;
+  display:grid; grid-template-columns:auto 1fr; gap:0;
+}
+.score-box{padding:20px 22px; display:flex; flex-direction:column; align-items:center; justify-content:center; border-right:1px solid var(--line); min-width:132px}
+.score-num{font-size:56px; font-weight:800; line-height:.95; letter-spacing:-.03em; font-variant-numeric:tabular-nums}
+.score-cap{font-size:11px; color:var(--faint); letter-spacing:.1em; text-transform:uppercase; margin-top:6px}
+.level{margin-top:10px; font-size:13px; font-weight:700; padding:3px 12px; border-radius:999px}
+.hero-body{padding:18px 20px; display:flex; flex-direction:column; gap:12px; justify-content:center}
+.action{font-size:14.5px; font-weight:600; line-height:1.55}
+.action .lead{color:var(--accent)}
+.triad{display:flex; gap:8px; flex-wrap:wrap}
+.triad span{font-size:12px; color:var(--muted); background:var(--surface-2); border:1px solid var(--line); padding:4px 10px; border-radius:999px}
+
+/* filter chips */
+.chips{display:flex; gap:8px; flex-wrap:wrap; margin-top:6px}
+.chip{
+  cursor:pointer; user-select:none; font-size:13px; font-weight:600;
+  padding:7px 13px; border-radius:999px; border:1px solid var(--line);
+  background:var(--surface); color:var(--muted); display:inline-flex; align-items:center; gap:7px;
+  transition:transform .06s ease;
+}
+.chip:active{transform:scale(.96)}
+.chip .n{font-variant-numeric:tabular-nums; font-weight:700; color:var(--ink)}
+.chip .dot{width:8px; height:8px; border-radius:50%}
+.chip[aria-pressed="true"]{background:var(--accent); border-color:var(--accent); color:#fff}
+.chip[aria-pressed="true"] .n{color:#fff}
+.chip.urg-over[aria-pressed="true"]{background:var(--danger); border-color:var(--danger)}
+.chip.urg-soon[aria-pressed="true"]{background:var(--warn); border-color:var(--warn)}
+
+/* list */
+ul.tasks{list-style:none; margin:12px 0 0; padding:0; display:flex; flex-direction:column; gap:8px}
+li.task{
+  background:var(--surface); border:1px solid var(--line); border-left-width:4px;
+  border-radius:11px; padding:12px 14px; box-shadow:var(--shadow);
+  display:grid; grid-template-columns:1fr auto; gap:6px 12px; align-items:start;
+}
+li.task.p-高{border-left-color:var(--p-high)} li.task.p-中{border-left-color:var(--p-mid)} li.task.p-低{border-left-color:var(--p-low)}
+li.task.is-over{background:var(--danger-bg)}
+.t-title{font-size:15px; font-weight:600; line-height:1.45; overflow-wrap:anywhere}
+.t-meta{grid-column:1/2; display:flex; flex-wrap:wrap; gap:6px 12px; align-items:center; font-size:12px; color:var(--muted)}
+.cat{display:inline-flex; align-items:center; gap:6px; font-weight:600}
+.cat .dot{width:8px; height:8px; border-radius:50%}
+.prio{font-weight:700; font-size:11px; letter-spacing:.04em}
+.prio.高{color:var(--p-high)} .prio.中{color:var(--muted)} .prio.低{color:var(--faint)}
+.due{grid-column:2; justify-self:end; text-align:right; font-variant-numeric:tabular-nums; white-space:nowrap; font-size:12.5px}
+.due .d-date{font-weight:600}
+.due .d-rel{display:block; font-size:11px; color:var(--faint)}
+.due.over .d-date,.due.over .d-rel{color:var(--danger); font-weight:700}
+.due.soon .d-date,.due.soon .d-rel{color:var(--warn); font-weight:700}
+.due.none .d-date{color:var(--faint); font-weight:500}
+.empty{color:var(--faint); text-align:center; padding:40px 0; font-size:14px}
+
+details.log{margin-top:14px; background:var(--surface); border:1px solid var(--line); border-radius:11px; box-shadow:var(--shadow)}
+details.log>summary{cursor:pointer; padding:14px 16px; font-weight:600; font-size:14px; list-style:none; display:flex; align-items:center; gap:8px}
+details.log>summary::-webkit-details-marker{display:none}
+details.log>summary::before{content:"▸"; color:var(--faint); transition:transform .15s}
+details.log[open]>summary::before{transform:rotate(90deg)}
+.log-list{padding:0 16px 12px; display:flex; flex-direction:column; gap:2px}
+.log-item{display:flex; gap:10px; padding:7px 0; border-top:1px solid var(--line); font-size:13px; color:var(--muted)}
+.log-item .lt{color:var(--ink); text-decoration:line-through; text-decoration-color:var(--faint); overflow-wrap:anywhere}
+.log-item .ld{margin-left:auto; font-variant-numeric:tabular-nums; color:var(--faint); white-space:nowrap}
+
+footer{margin-top:30px; padding:18px 2px; border-top:1px solid var(--line); color:var(--faint); font-size:12.5px; line-height:1.7}
+footer code{background:var(--surface-2); border:1px solid var(--line); padding:1px 6px; border-radius:6px; font-size:12px; color:var(--muted)}
+.upd{color:var(--faint); font-size:12px; font-variant-numeric:tabular-nums}
+@media (max-width:560px){
+  .hero{grid-template-columns:1fr}
+  .score-box{flex-direction:row; gap:16px; border-right:0; border-bottom:1px solid var(--line); justify-content:flex-start}
+  .score-num{font-size:44px}
+  .brand small{display:none}
+}
+</style>
+</head>
+<body>
+<header class="top"><div class="wrap">
+  <div class="brand">U Share タスク<small>Yuta ・ Apple メモ連携</small></div>
+  <div class="search"><input id="q" type="search" placeholder="検索…" autocomplete="off"></div>
+</div></header>
+
+<main class="wrap">
+  <section class="hero" id="hero">
+    <div class="score-box">
+      <div class="score-num" id="score">–</div>
+      <div class="score-cap">危険度</div>
+      <div class="level" id="level"></div>
+    </div>
+    <div class="hero-body">
+      <div class="action" id="action"></div>
+      <div class="triad" id="triad"></div>
+    </div>
+  </section>
+
+  <div class="eyebrow">今日のフォーカス</div>
+  <div class="chips" id="urgchips"></div>
+
+  <div class="eyebrow">カテゴリー</div>
+  <div class="chips" id="catchips"></div>
+
+  <div class="eyebrow" id="listhead">タスク</div>
+  <ul class="tasks" id="list"></ul>
+
+  <details class="log" id="logbox">
+    <summary><span id="logsum"></span></summary>
+    <div class="log-list" id="loglist"></div>
+  </details>
+
+  <footer>
+    <strong>使い方：</strong>Apple メモの「📥タスク入力」に1行=1タスクで書くだけ。数分後にこのページへ反映されます。<br>
+    記法（任意）：<code>@カテゴリ</code> <code>~7/15</code>（期限） <code>*高</code>（優先度） 行頭 <code>✓</code> で完了。<br>
+    <span class="upd">最終更新 <span id="updated"></span>（5分ごとに自動更新）</span>
+  </footer>
+</main>
+
+<script>
+const DATA = {"active": [{"title": "中国マーケインターンの契約書作成", "category": "HR", "due": "2026-07-07", "priority": "高", "done": false, "days": -2}, {"title": "Nicholas Lamaとの日程確認", "category": "コミュニティ", "due": "2026-07-07", "priority": "中", "done": false, "days": -2}, {"title": "中村柾さんの契約書作成", "category": "セールス", "due": "2026-07-08", "priority": "高", "done": false, "days": -1}, {"title": "RAにGatheringの日程共有", "category": "RA対応", "due": "2026-07-08", "priority": "中", "done": false, "days": -1}, {"title": "入居者がオンボーディングを受けているか確認", "category": "コミュニティ", "due": "2026-07-08", "priority": "中", "done": false, "days": -1}, {"title": "RAのアンケート結果共有", "category": "RA対応", "due": "2026-07-08", "priority": "中", "done": false, "days": -1}, {"title": "KINGの協賛契約書への署名", "category": "事業推進", "due": "2026-07-09", "priority": "高", "done": false, "days": 0}, {"title": "RAによる経費申請確認", "category": "RA対応", "due": "2026-07-09", "priority": "高", "done": false, "days": 0}, {"title": "RAチームのアウトプット確認", "category": "RA対応", "due": "2026-07-09", "priority": "中", "done": false, "days": 0}, {"title": "面談で使える小ネタを30個書く", "category": "セールス", "due": "2026-07-09", "priority": "低", "done": false, "days": 0}, {"title": "RA報酬額の算定", "category": "RA対応", "due": "2026-07-10", "priority": "高", "done": false, "days": 1}, {"title": "Farewell Eventの日程決定", "category": "イベント", "due": "2026-07-10", "priority": "中", "done": false, "days": 1}, {"title": "7月8月のAll RA Meetingの日程決め", "category": "RA対応", "due": "2026-07-10", "priority": "中", "done": false, "days": 1}, {"title": "留学ジャーナルのインタビュー手配", "category": "広告", "due": "2026-07-10", "priority": "中", "done": false, "days": 1}, {"title": "マグカップ配布", "category": "コミュニティ", "due": "2026-07-10", "priority": "低", "done": false, "days": 1}, {"title": "Liuさんの記事作成、Marinaさんに確認依頼", "category": "SNS", "due": "2026-07-17", "priority": "中", "done": false, "days": 8}, {"title": "RA報酬額をあさこさんに伝えて入金依頼する", "category": "RA対応", "due": "2026-07-20", "priority": "高", "done": false, "days": 11}, {"title": "Living Guidelineへの追記", "category": "コミュニティ", "due": "2026-07-31", "priority": "中", "done": false, "days": 22}, {"title": "入居者の大学についてのインタビューを行う", "category": "SNS", "due": "2026-08-31", "priority": "中", "done": false, "days": 53}, {"title": "予約システムの導入", "category": "事業推進", "due": null, "priority": "高", "done": false, "days": null}, {"title": "AMEXカードのログインをして明細を確認", "category": "その他", "due": null, "priority": "中", "done": false, "days": null}, {"title": "費用一覧をアップデートする", "category": "その他", "due": null, "priority": "中", "done": false, "days": null}, {"title": "CRCCのメールに返信する", "category": "その他", "due": null, "priority": "中", "done": false, "days": null}, {"title": "稲門会にU Shareの住民が参加していいか確認", "category": "コミュニティ", "due": null, "priority": "低", "done": false, "days": null}], "log": [], "score": 100, "overdue": 6, "soon": 9, "nodue": 5, "total": 24, "done_total": 0, "updated": "2026/07/09 21:57", "cats": ["SNS", "セールス", "イベント", "RA対応", "広告", "コミュニティ", "事業推進", "HR", "その他"], "cat_colors": {"SNS": "#d6337f", "セールス": "#c26a2e", "イベント": "#b8912a", "RA対応": "#3f8f4f", "広告": "#7a5bbf", "コミュニティ": "#2f77b5", "事業推進": "#1f8a7a", "HR": "#8a7a4a", "その他": "#8a8f9a"}, "cat_counts": {"SNS": 2, "セールス": 2, "イベント": 1, "RA対応": 7, "広告": 1, "コミュニティ": 5, "事業推進": 2, "HR": 1, "その他": 3}};
+const $ = s => document.querySelector(s);
+const esc = s => s.replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const state = {q:"", urg:null, cat:null};
+
+// hero
+$("#score").textContent = DATA.score;
+const lv = DATA.score>=70?["🔴 危険","var(--danger)","var(--danger-bg)"]
+        : DATA.score>=40?["🟠 警戒","var(--warn)","var(--warn-bg)"]
+        : DATA.score>=20?["🟡 注意","var(--warn)","var(--warn-bg)"]
+        : ["🟢 安全","var(--ok)","var(--ok-bg)"];
+const level=$("#level"); level.textContent=lv[0]; level.style.color=lv[1]; level.style.background=lv[2];
+$("#action").innerHTML = '<span class="lead">👉 </span>' + esc(
+  DATA.score>=70 ? "期限切れを1件ずつ処理。①人に渡す（担当を変える）②期限を現実的に引き直す ③迷うものは上長・週次MTGで相談。"
+: DATA.score>=40 ? "キャパ超え気味。優先度「高」の順番を決め、抱えきれない分は人に渡すか期限延長の相談を。"
+: DATA.score>=20 ? "期限が近いものから着手。期限未設定に日付を入れ、相手待ちにはリマインドを。"
+: "良好。メモに書いたら反映される。新しいタスクの入れ忘れだけ確認。");
+$("#triad").innerHTML =
+  `<span>未完了 <b>${DATA.total}</b></span><span>完了ログ <b>${DATA.done_total}</b></span>`;
+
+// urgency chips
+const urg=[["over","期限切れ",DATA.overdue,"urg-over"],["soon","3日以内",DATA.soon,"urg-soon"],["none","期限未設定",DATA.nodue,""]];
+$("#urgchips").innerHTML = urg.map(([k,l,n,c])=>
+  `<button class="chip ${c}" data-urg="${k}" aria-pressed="false"><span>${l}</span><span class="n">${n}</span></button>`).join("");
+
+// category chips
+$("#catchips").innerHTML = DATA.cats.filter(c=>DATA.cat_counts[c]).map(c=>
+  `<button class="chip" data-cat="${esc(c)}" aria-pressed="false"><span class="dot" style="background:${DATA.cat_colors[c]}"></span><span>${esc(c)}</span><span class="n">${DATA.cat_counts[c]}</span></button>`).join("")
+  || '<span style="color:var(--faint);font-size:13px">—</span>';
+
+function dueInfo(t){
+  if(t.due===null) return {cls:"none",date:"期限なし",rel:""};
+  const d=t.days;
+  const [y,m,dd]=t.due.split("-");
+  const date=`${+m}/${+dd}`;
+  let cls="", rel="";
+  if(d<0){cls="over"; rel=`${-d}日超過`;}
+  else if(d===0){cls="soon"; rel="今日";}
+  else if(d<=3){cls="soon"; rel=`あと${d}日`;}
+  else{rel=`あと${d}日`;}
+  return {cls,date,rel};
+}
+
+function render(){
+  let items=DATA.active.filter(t=>{
+    if(state.q && !t.title.toLowerCase().includes(state.q)) return false;
+    if(state.cat && t.category!==state.cat) return false;
+    if(state.urg==="over" && !(t.due!==null && t.days<0)) return false;
+    if(state.urg==="soon" && !(t.due!==null && t.days>=0 && t.days<=3)) return false;
+    if(state.urg==="none" && t.due!==null) return false;
+    return true;
+  });
+  $("#listhead").textContent = `タスク（${items.length}）`;
+  const list=$("#list");
+  if(!items.length){list.innerHTML='<li class="empty">該当なし 🎉</li>'; return;}
+  list.innerHTML=items.map(t=>{
+    const di=dueInfo(t);
+    const over=(t.due!==null&&t.days<0);
+    return `<li class="task p-${t.priority} ${over?'is-over':''}">
+      <div class="t-title">${esc(t.title)}</div>
+      <div class="due ${di.cls}"><span class="d-date">${di.date}</span><span class="d-rel">${di.rel}</span></div>
+      <div class="t-meta">
+        <span class="cat"><span class="dot" style="background:${DATA.cat_colors[t.category]}"></span>${esc(t.category)}</span>
+        <span class="prio ${t.priority}">優先度 ${t.priority}</span>
+      </div></li>`;
+  }).join("");
+}
+
+// completed log
+$("#logsum").textContent = `完了ログ（${DATA.done_total}）— 頑張りの記録`;
+$("#loglist").innerHTML = DATA.log.length ? DATA.log.map(e=>{
+  const [y,m,d]=e.completed_date.split("-");
+  return `<div class="log-item"><span class="lt">${esc(e.title)}</span><span class="ld">${+m}/${+d}</span></div>`;
+}).join("") : '<div class="log-item" style="border:0;color:var(--faint)">まだありません。メモで行頭に ✓ を付けるとここに溜まります。</div>';
+
+$("#updated").textContent = DATA.updated;
+
+// interactions
+$("#q").addEventListener("input",e=>{state.q=e.target.value.trim().toLowerCase(); render();});
+document.querySelectorAll("[data-urg]").forEach(b=>b.addEventListener("click",()=>{
+  const k=b.dataset.urg; state.urg = state.urg===k?null:k;
+  document.querySelectorAll("[data-urg]").forEach(x=>x.setAttribute("aria-pressed", x.dataset.urg===state.urg));
+  render();
+}));
+document.querySelectorAll("[data-cat]").forEach(b=>b.addEventListener("click",()=>{
+  const k=b.dataset.cat; state.cat = state.cat===k?null:k;
+  document.querySelectorAll("[data-cat]").forEach(x=>x.setAttribute("aria-pressed", x.dataset.cat===state.cat));
+  render();
+}));
+render();
+</script>
+</body>
+</html>
