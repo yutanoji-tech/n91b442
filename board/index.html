@@ -234,7 +234,7 @@ function card(t){
              : (dl===0 && !t.done ? `<span class="flag today">本日締切</span>` : "");
   el.innerHTML = `
     <div class="row1">
-      <span class="handle" title="ドラッグで移動" draggable="true">⠿</span>
+      <span class="handle" title="ドラッグで移動">⠿</span>
       <input class="chk" type="checkbox" ${t.done?"checked":""} title="完了">
       <div class="title" contenteditable="true" spellcheck="false"></div>
       <button class="del" title="削除">×</button>
@@ -254,15 +254,16 @@ function card(t){
   el.querySelector(".cat").onchange = e=>{ t.cat=e.target.value; save(); };
   el.querySelector(".pri").onchange = e=>{ t.pri=e.target.value; el.className="card pri-"+t.pri+(t.done?" done":""); save(); };
   el.querySelector(".due").onchange = e=>{ t.due=e.target.value; save(); render(); };
-  // drag
-  const handle = el.querySelector(".handle");
-  handle.addEventListener("dragstart", ev=>{
+  // drag：カードのどこをつかんでもOK（編集欄からのドラッグは無効化して編集を優先）
+  el.setAttribute("draggable","true");
+  el.addEventListener("dragstart", ev=>{
+    if(ev.target.closest('input,select,textarea,button,[contenteditable="true"]')){ ev.preventDefault(); return; }
     ev.dataTransfer.setData("text/plain", t.id);
     ev.dataTransfer.effectAllowed="move";
     ev.dataTransfer.setDragImage(el, 20, 20);
     el.classList.add("dragging");
   });
-  handle.addEventListener("dragend", ()=> el.classList.remove("dragging"));
+  el.addEventListener("dragend", ()=> el.classList.remove("dragging"));
   return el;
 }
 
