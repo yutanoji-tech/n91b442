@@ -116,7 +116,34 @@ label.toggle{font-size:13px; color:var(--muted); display:flex; align-items:cente
   <button class="addbtn" id="addRoutine" style="margin-top:8px">+ ルーティンを追加</button>
 </div>
 
-<script>
+<script type="module">
+const firebaseConfig = {
+  apiKey: "AIzaSyARqWam0TKzMV57cy4GxwCzHtRlfSI51vQ",
+  authDomain: "yuta-s-tasks.firebaseapp.com",
+  projectId: "yuta-s-tasks",
+  storageBucket: "yuta-s-tasks.firebasestorage.app",
+  messagingSenderId: "24897905739",
+  appId: "1:24897905739:web:25c59b70c853a5e85959ce"
+};
+let _docRef=null, _setDoc=null, _onSnapshot=null, _cloudReady=false;
+let _pushTimer=null, _editing=false, _pendingRemote=null, _applyingRemote=false;
+try {
+  const appMod = await import("https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js");
+  const fs = await import("https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js");
+  const _db = fs.getFirestore(appMod.initializeApp(firebaseConfig));
+  _docRef = fs.doc(_db, "board", "main");
+  _setDoc = fs.setDoc; _onSnapshot = fs.onSnapshot;
+  _cloudReady = true;
+} catch(e){ console.warn("Firebase読み込み失敗。ローカルのみで動作します。", e); }
+function cloudPush(){
+  if(!_cloudReady) return;
+  clearTimeout(_pushTimer);
+  _pushTimer = setTimeout(()=>{
+    _setDoc(_docRef, {data: JSON.stringify({tasks:state.tasks, routines:state.routines}), ts: Date.now()})
+      .then(()=>setStamp("☁ 同期済")).catch(e=>{ console.warn("push",e); setStamp("⚠ 同期エラー"); });
+  }, 400);
+}
+
 const CATS = ["SNS","セールス","イベント","RA対応","広告","コミュニティ","事業推進","HR","その他"];
 const QUAD = {
   q1:{badge:"① 重要 × 緊急", sub:"今すぐやる"},
@@ -195,8 +222,9 @@ function load(){
     hideDone:false,
   };
 }
-function save(){ localStorage.setItem(KEY, JSON.stringify(state)); stamp(); }
-function stamp(){ document.getElementById("stamp").textContent = "保存済 " + new Date().toLocaleTimeString("ja-JP",{hour:"2-digit",minute:"2-digit"}); }
+function save(){ localStorage.setItem(KEY, JSON.stringify(state)); stamp(); if(!_applyingRemote) cloudPush(); }
+function stamp(){ setStamp("保存済"); }
+function setStamp(prefix){ document.getElementById("stamp").textContent = prefix + " " + new Date().toLocaleTimeString("ja-JP",{hour:"2-digit",minute:"2-digit"}); }
 
 function dueClass(due){ const d=daysLeft(due); if(d===null) return ""; if(d<0) return "due-late"; if(d<=2) return "due-soon"; return ""; }
 
@@ -348,7 +376,33 @@ document.getElementById("importFile").onchange = e=>{
   r.readAsText(f);
 };
 
-save(); render();
+render();
+
+// ===== Firestore リアルタイム同期 =====
+function applyRemote(remote){
+  _applyingRemote = true;
+  state.tasks = remote.tasks || [];
+  state.routines = remote.routines || [];
+  localStorage.setItem(KEY, JSON.stringify(state));
+  render();
+  _applyingRemote = false;
+}
+// 編集中はリモート反映を保留（入力中にフォーカスが飛ぶのを防ぐ）
+document.addEventListener("focusin", e=>{ if(e.target.closest(".card, .ritem")) _editing=true; });
+document.addEventListener("focusout", e=>{ if(e.target.closest(".card, .ritem")){ _editing=false; if(_pendingRemote){ applyRemote(_pendingRemote); _pendingRemote=null; } } });
+if(_cloudReady){
+  _onSnapshot(_docRef, snap=>{
+    if(!snap.exists()){ cloudPush(); return; }            // 初回：この端末の内容をクラウドへ
+    let remote; try{ remote = JSON.parse(snap.data().data); }catch(e){ return; }
+    const localJson = JSON.stringify({tasks:state.tasks, routines:state.routines});
+    if(JSON.stringify(remote)===localJson){ setStamp("☁ 同期済"); return; } // 自分の書き込みのエコー
+    if(_editing){ _pendingRemote = remote; return; }
+    applyRemote(remote);
+    setStamp("☁ 受信");
+  }, err=>{ console.warn("snapshot", err); setStamp("⚠ 同期エラー"); });
+} else {
+  setStamp("ローカルのみ");
+}
 </script>
 </body>
 </html>
