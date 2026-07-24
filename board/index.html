@@ -278,20 +278,23 @@ function card(t){
   el.querySelector(".del").onclick = ()=>{ if(confirm("このタスクを削除しますか？")){ state.tasks=state.tasks.filter(x=>x.id!==t.id); save(); render(); } };
   const title = el.querySelector(".title");
   title.onblur = ()=>{ t.title=title.textContent.trim()||"（無題）"; save(); };
-  title.onkeydown = e=>{ if(e.key==="Enter"){ e.preventDefault(); title.blur(); } };
+  title.onkeydown = e=>{ if(e.key==="Enter" && !e.isComposing){ e.preventDefault(); title.blur(); } };
   el.querySelector(".cat").onchange = e=>{ t.cat=e.target.value; save(); };
   el.querySelector(".pri").onchange = e=>{ t.pri=e.target.value; el.className="card pri-"+t.pri+(t.done?" done":""); save(); };
   el.querySelector(".due").onchange = e=>{ t.due=e.target.value; save(); render(); };
-  // drag：カードのどこをつかんでもOK（編集欄からのドラッグは無効化して編集を優先）
-  el.setAttribute("draggable","true");
+  // drag：カード本体をつかめば移動。編集欄を触った時だけdraggableを外し、IME二重入力を防ぐ
+  el.draggable = false;
+  el.addEventListener("mousedown", ev=>{
+    el.draggable = !ev.target.closest('input,select,textarea,button,[contenteditable="true"]');
+  });
   el.addEventListener("dragstart", ev=>{
-    if(ev.target.closest('input,select,textarea,button,[contenteditable="true"]')){ ev.preventDefault(); return; }
+    if(!el.draggable){ ev.preventDefault(); return; }
     ev.dataTransfer.setData("text/plain", t.id);
     ev.dataTransfer.effectAllowed="move";
     ev.dataTransfer.setDragImage(el, 20, 20);
     el.classList.add("dragging");
   });
-  el.addEventListener("dragend", ()=> el.classList.remove("dragging"));
+  el.addEventListener("dragend", ()=>{ el.classList.remove("dragging"); el.draggable=false; });
   return el;
 }
 
