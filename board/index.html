@@ -62,8 +62,10 @@ label.toggle{font-size:12.5px; color:var(--muted); display:flex; align-items:cen
 .addbtn:hover{border-color:var(--accent); background:color-mix(in srgb,var(--accent) 6%,transparent)}
 
 .card{background:var(--surface); border:1px solid var(--line); border-left-width:4px; border-radius:9px; padding:6px 8px;
-  display:flex; flex-direction:column; gap:4px; transition:transform .1s, box-shadow .1s}
+  display:flex; flex-direction:column; gap:4px; transition:transform .1s, box-shadow .1s; cursor:grab}
+.card:active{cursor:grabbing}
 .card:hover{box-shadow:var(--shadow)}
+.title[contenteditable="true"]{cursor:text}
 .card.pri-高{border-left-color:var(--q1)} .card.pri-中{border-left-color:var(--q3)} .card.pri-低{border-left-color:var(--faint)}
 .card.overdue{background:var(--q1bg); border-color:color-mix(in srgb,var(--q1) 45%,var(--line))}
 .card.done{opacity:.5}
@@ -241,7 +243,7 @@ function render(){
     sec.appendChild(list);
     const add=document.createElement("button"); add.className="addbtn"; add.textContent="＋ 追加";
     add.onclick=()=>{ const nt={id:uid(),cat:"その他",title:"新しいタスク",pri:"中",due:"",done:false,quad:col.key}; state.tasks.push(nt); save(); render();
-      setTimeout(()=>{const el=document.querySelector(`[data-id="${nt.id}"] .title`); if(el){el.focus();document.getSelection().selectAllChildren(el);}},0); };
+      setTimeout(()=>{const el=document.querySelector(`[data-id="${nt.id}"] .title`); if(el&&el._enterEdit)el._enterEdit();},0); };
     sec.appendChild(add);
     setupDrop(list); board.appendChild(sec);
   }
@@ -256,26 +258,34 @@ function card(t){
   const flag=overdue?`<span class="flag late">${-dl}日超過</span>`:(dl===0&&!t.done?`<span class="flag today">本日</span>`:"");
   el.innerHTML=`<div class="row1"><span class="handle" title="ドラッグで移動">⠿</span>
     <input class="chk" type="checkbox" ${t.done?"checked":""}>
-    <div class="title" contenteditable="true" spellcheck="false"></div>
+    <div class="title" contenteditable="false" spellcheck="false" title="クリックで編集"></div>
     <button class="del">×</button></div>
     <div class="meta">
       <select class="cat">${CATS.map(c=>`<option ${c===t.cat?"selected":""}>${c}</option>`).join("")}</select>
       <select class="pri">${["高","中","低"].map(p=>`<option ${p===t.pri?"selected":""}>${p}</option>`).join("")}</select>
       <input class="due ${dueClass(t.due)}" type="date" value="${t.due||""}">${flag}
     </div>`;
-  el.querySelector(".title").textContent=t.title;
+  const title=el.querySelector(".title"); title.textContent=t.title;
   el.querySelector(".chk").onchange=e=>{ toggleDone(t,e.target.checked,el); };
   el.querySelector(".del").onclick=()=>{ if(confirm("削除しますか？")){ state.tasks=state.tasks.filter(x=>x.id!==t.id); save(); render(); } };
-  const title=el.querySelector(".title");
-  title.onblur=()=>{ t.title=title.textContent.trim()||"（無題）"; save(); };
+  // タイトルは「クリックで編集」。編集中だけドラッグを止める（IME・テキスト選択のため）
+  function enterEdit(){ if(title.getAttribute("contenteditable")==="true")return; title.setAttribute("contenteditable","true"); el.draggable=false;
+    title.focus(); const r=document.createRange(); r.selectNodeContents(title); const s=getSelection(); s.removeAllRanges(); s.addRange(r); }
+  title._enterEdit=enterEdit;
+  title.addEventListener("click",enterEdit);
+  title.onblur=()=>{ title.setAttribute("contenteditable","false"); el.draggable=true; t.title=title.textContent.trim()||"（無題）"; save(); };
   title.onkeydown=e=>{ if(e.key==="Enter"&&!e.isComposing){ e.preventDefault(); title.blur(); } };
   el.querySelector(".cat").onchange=e=>{ t.cat=e.target.value; save(); };
   el.querySelector(".pri").onchange=e=>{ t.pri=e.target.value; el.className="card pri-"+t.pri+(t.done?" done":"")+(overdue?" overdue":""); save(); };
   el.querySelector(".due").onchange=e=>{ t.due=e.target.value; save(); render(); };
-  el.draggable=false;
-  el.addEventListener("mousedown",ev=>{ el.draggable=!ev.target.closest('input,select,textarea,button,[contenteditable="true"]'); });
-  el.addEventListener("dragstart",ev=>{ if(!el.draggable){ev.preventDefault();return;} ev.dataTransfer.setData("text/plain",t.id); ev.dataTransfer.effectAllowed="move"; ev.dataTransfer.setDragImage(el,20,15); el.classList.add("dragging"); });
-  el.addEventListener("dragend",()=>{ el.classList.remove("dragging"); el.draggable=false; });
+  // カード全体をドラッグ可能。編集中(draggable=false)と入力系からのドラッグは無効
+  el.draggable=true;
+  el.addEventListener("mousedown",ev=>{ if(title.getAttribute("contenteditable")!=="true") el.draggable=true; });
+  el.addEventListener("dragstart",ev=>{
+    if(el.draggable===false || ev.target.closest('input,select,textarea,button')){ ev.preventDefault(); return; }
+    ev.dataTransfer.setData("text/plain",t.id); ev.dataTransfer.effectAllowed="move"; ev.dataTransfer.setDragImage(el,20,15); el.classList.add("dragging");
+  });
+  el.addEventListener("dragend",()=>el.classList.remove("dragging"));
   return el;
 }
 
