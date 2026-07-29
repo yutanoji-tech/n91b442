@@ -79,6 +79,8 @@ label.toggle{font-size:12.5px; color:var(--muted); display:flex; align-items:cen
 .title:focus{background:color-mix(in srgb,var(--accent) 9%,transparent); border-radius:4px}
 .del{flex:none; border:none; background:none; color:var(--faint); cursor:pointer; font-size:14px; line-height:1; padding:0 2px}
 .del:hover{color:var(--danger)}
+.dup{flex:none; border:none; background:none; color:var(--faint); cursor:pointer; font-size:12px; line-height:1; padding:0 2px}
+.dup:hover{color:var(--accent)}
 .card.dragging{opacity:.4}
 .meta{display:flex; flex-wrap:wrap; gap:4px; align-items:center; padding-left:19px}
 .meta select,.meta input[type=date]{font:inherit; font-size:10.5px; color:var(--muted); background:var(--surface-2);
@@ -259,6 +261,7 @@ function card(t){
   el.innerHTML=`<div class="row1"><span class="handle" title="ドラッグで移動">⠿</span>
     <input class="chk" type="checkbox" ${t.done?"checked":""}>
     <div class="title" contenteditable="false" spellcheck="false" title="クリックで編集"></div>
+    <button class="dup" title="複製">⧉</button>
     <button class="del">×</button></div>
     <div class="meta">
       <select class="cat">${CATS.map(c=>`<option ${c===t.cat?"selected":""}>${c}</option>`).join("")}</select>
@@ -268,6 +271,8 @@ function card(t){
   const title=el.querySelector(".title"); title.textContent=t.title;
   el.querySelector(".chk").onchange=e=>{ toggleDone(t,e.target.checked,el); };
   el.querySelector(".del").onclick=()=>{ if(confirm("削除しますか？")){ state.tasks=state.tasks.filter(x=>x.id!==t.id); save(); render(); } };
+  el.querySelector(".dup").onclick=()=>{ const copy={...t,id:uid(),done:false,xpAwarded:false}; delete copy.srcId;
+    const i=state.tasks.findIndex(x=>x.id===t.id); state.tasks.splice(i<0?state.tasks.length:i+1,0,copy); save(); render(); };
   // タイトルは「クリックで編集」。編集中だけドラッグを止める（IME・テキスト選択のため）
   function enterEdit(){ if(title.getAttribute("contenteditable")==="true")return; title.setAttribute("contenteditable","true"); el.draggable=false;
     title.focus(); const r=document.createRange(); r.selectNodeContents(title); const s=getSelection(); s.removeAllRanges(); s.addRange(r); }
